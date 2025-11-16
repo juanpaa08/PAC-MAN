@@ -1,0 +1,113 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1a1a2e;
+    color: #fff;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #ffcc00;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.control-panel {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.parameters, .controls {
+    flex: 1;
+    min-width: 300px;
+    margin: 10px;
+}
+
+.param-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: inline-block;
+    width: 150px;
+    margin-right: 10px;
+}
+
+input[type="number"] {
+    width: 100px;
+    padding: 5px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #0f3460;
+    color: white
+}
+
+button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background: #ffcc00;
+    color: #1a1a2e;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover:not(disabled) {
+    background: #ffd700;
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+.metrics {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+#metricsDisplay {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.game-area {
+    text-align: center;
+}
+
+#gameCanvas {
+    border: 2px solid #ffcc00;
+    border-radius: 10px;
+    background: #000;
+}
+
+#fitnessChart {
+    border: 1px solid #333;
+    background: #0f3460;
+}

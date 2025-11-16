@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GA-Pac-man - Algoritmo Genético</title>
+    <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GA-Pac-man</h1>
+            <p>Algoritmo Genético para aprender a jugar Pac-Man</p>
+        </header>
+
+        <div class="control-panel">
+            <div class="parameters">
+                <h3>Parámetros del AG</h3>
+                <div class="param-group">
+                    <label>Población (N):</label>
+                    <input type="number" id="populationSize" value="20" min="20">
+                </div>
+                <div class="param-group">
+                    <label>Generaciones (G):</label>
+                    <input type="number" id="generations" value="50" min="50">
+                </div>
+                <div class="param-group">
+                    <label>Semilla:</label>
+                    <input type="number" id="seed" value="12345">
+                </div>
+                <div class="param-group">
+                    <label>FPS:</label>
+                    <input type="number" id="fps" value="30" min="1" max="60">
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn">Iniciar Evolución</button>
+                <button id="pauseBtn" disabled>Pausar</button>
+                <button id="resetBtn">Reiniciar</button>
+                <button id="exportBtn">Exportar Mejor</button>
+                <button id="demoBtn">Demo Mejor</button>
+            </div>
+        </div>
+
+        <div class="metrics">
+            <h3>Métricas en Tiempo Real</h3>
+            <div id="metricsDisplay">
+                <p>Mejor Fitness: <span id="bestFitness">0</span></p>
+                <p>Promedio Fitness: <span id="avgFitness">0</span></p>
+                <p>Generación: <span id="currentGeneration">0</span></p>
+            </div>
+            <canvas id="fitnessChart" width="600" height="200"></canvas>
+        </div>
+
+        <div class="game-area">
+            <h3>Vista del Juego</h3>
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+    </div>
+
+    <!-- SOLO ESTE SCRIPT -->
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

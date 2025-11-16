@@ -1,0 +1,10 @@
+{
+    "populationSize": 20,
+    "generations": 50,
+    "mutationRate": 0.1,
+    "crossoverRate": 0.7,
+    "elitismCount": 1,
+    "tournamentSize": 3,
+    "seed": 12345,
+    "fps": 30
+}
