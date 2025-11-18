@@ -33,7 +33,23 @@ class GameApp {
         this.exportBtn = document.getElementById('exportBtn');
         this.demoBtn = document.getElementById('demoBtn');
         
+        // Mostrar vista previa del mapa al iniciar
+        this.showMapPreview();
+        
         // Luego hay que inicializar gráfico de fitness si es necesario
+    }
+
+    /**
+     * Muestra una vista previa del mapa antes de iniciar la evolución
+     */
+    showMapPreview() {
+        const previewConfig = {
+            fps: 30,
+            populationSize: 1,
+            generations: 1
+        };
+        const previewEngine = new GameEngine(this.canvas, previewConfig);
+        previewEngine.render();
     }
 
     /**
@@ -136,10 +152,13 @@ class GameApp {
         this.pauseBtn.disabled = true;
         this.pauseBtn.textContent = 'Pausar';
         
-        // Liego hay que resetar las métricas de la UI
+        // Resetar las métricas de la UI
         document.getElementById('bestFitness').textContent = '0';
         document.getElementById('avgFitness').textContent = '0';
         document.getElementById('currentGeneration').textContent = '0';
+        
+        // Mostrar vista previa del mapa nuevamente
+        this.showMapPreview();
         
         console.log('Aplicación reiniciada');
     }
