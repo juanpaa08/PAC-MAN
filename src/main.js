@@ -15,8 +15,8 @@ class GameApp {
         this.ga = null;              // Instancia del algoritmo genético
         this.gameEngine = null;      // Motor del juego Pac-Man
         this.isRunning = false;      // Estado de la evolución
-        this.currentGeneration = 0;  
-        
+        this.currentGeneration = 0;
+
         this.initializeElements();
         this.setupEventListeners();
     }
@@ -32,10 +32,10 @@ class GameApp {
         this.resetBtn = document.getElementById('resetBtn');
         this.exportBtn = document.getElementById('exportBtn');
         this.demoBtn = document.getElementById('demoBtn');
-        
+
         // Mostrar vista previa del mapa al iniciar
         this.showMapPreview();
-        
+
         // Luego hay que inicializar gráfico de fitness si es necesario
     }
 
@@ -70,12 +70,16 @@ class GameApp {
         const config = this.getConfig();
         this.ga = new GeneticAlgorithm(config);
         this.gameEngine = new GameEngine(this.canvas, config);
-        
+
         this.isRunning = true;
         this.startBtn.disabled = true;
         this.pauseBtn.disabled = false;
-        
+
         console.log('Iniciando evolución con configuración:', config);
+
+        // Iniciar el motor del juego para visualización y controles manuales
+        this.gameEngine.start();
+
         this.runGeneration();
     }
 
@@ -88,9 +92,9 @@ class GameApp {
         // Luego hay que implementar lógica de evaluación de individuos
         this.ga.evolve();
         this.currentGeneration++;
-        
+
         this.updateMetrics();
-        
+
         // Continuar con la siguiente generación si no hemos llegado al límite
         if (this.currentGeneration < this.ga.config.generations) {
             requestAnimationFrame(() => this.runGeneration());
@@ -106,11 +110,11 @@ class GameApp {
         // Se deben obtener las métricas reales del algoritmo genético
         const bestFitness = this.ga.population.getBestFitness().toFixed(2);
         const avgFitness = this.ga.population.getAverageFitness().toFixed(2);
-        
+
         document.getElementById('bestFitness').textContent = bestFitness;
         document.getElementById('avgFitness').textContent = avgFitness;
         document.getElementById('currentGeneration').textContent = this.currentGeneration;
-        
+
         // Posteriormente hay que actualizar gráfico de fitness
     }
 
@@ -124,9 +128,9 @@ class GameApp {
             generations: parseInt(document.getElementById('generations').value),
             seed: parseInt(document.getElementById('seed').value),
             fps: parseInt(document.getElementById('fps').value),
-            mutationRate: 0.1,    
-            crossoverRate: 0.7,   
-            elitismCount: 1       
+            mutationRate: 0.1,
+            crossoverRate: 0.7,
+            elitismCount: 1
         };
     }
 
@@ -136,7 +140,7 @@ class GameApp {
     togglePause() {
         this.isRunning = !this.isRunning;
         this.pauseBtn.textContent = this.isRunning ? 'Pausar' : 'Reanudar';
-        
+
         if (this.isRunning) {
             this.runGeneration();
         }
@@ -151,15 +155,15 @@ class GameApp {
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
         this.pauseBtn.textContent = 'Pausar';
-        
+
         // Resetar las métricas de la UI
         document.getElementById('bestFitness').textContent = '0';
         document.getElementById('avgFitness').textContent = '0';
         document.getElementById('currentGeneration').textContent = '0';
-        
+
         // Mostrar vista previa del mapa nuevamente
         this.showMapPreview();
-        
+
         console.log('Aplicación reiniciada');
     }
 
@@ -171,7 +175,7 @@ class GameApp {
             alert('Primero debe ejecutar el algoritmo genético');
             return;
         }
-        
+
         // Luego debe implementarse la exportación del mejor individuo
         const bestIndividual = this.ga.population.getBestIndividual();
         console.log('Exportando mejor individuo:', bestIndividual);
@@ -186,7 +190,7 @@ class GameApp {
             alert('Primero debe ejecutar el algoritmo genético');
             return;
         }
-        
+
         // Hay que implementar demo del mejor individuo
         console.log('Iniciando demo del mejor individuo');
         alert('Funcionalidad de demo en desarrollo');
@@ -199,9 +203,9 @@ class GameApp {
         this.isRunning = false;
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
-        
+
         console.log('Evolución completada después de', this.currentGeneration, 'generaciones');
-        
+
         // Hay que mostrar un resumen final de resultados
     }
 }
