@@ -4,6 +4,7 @@
  */
 
 import { Pacman } from './Pacman.js';
+import { Ghost } from './Ghost.js';
 
 /**
  * Clase principal del motor del juego
@@ -29,6 +30,9 @@ export class GameEngine {
 
         // Inicializar Pacman en la posición original (13.5, 23)
         this.pacman = new Pacman(13.5, 23, this.tileSize);
+
+        // Inicializa a los fantasmas
+        this.ghosts = this.initializeGhosts();
 
         // Configurar controles manuales para pruebas
         this.setupControls();
@@ -77,6 +81,25 @@ export class GameEngine {
     }
 
     /**
+    * Inicializa los 4 fantasmas clásicos
+    */
+   initializeGhosts() {
+    const ghosts = [];
+    const ghostData = [
+        { x: 13, y: 11, color: '#FF0000', name: 'Blinky' },  // Rojo
+        { x: 13, y: 15, color: '#FFB8FF', name: 'Pinky' },   // Rosado
+        { x: 13, y: 14, color: '#00FFFF', name: 'Inky' },    // Celeste
+        { x: 13, y: 15, color: '#FFB852', name: 'Clyde' },   // Naranja
+    ];
+
+    ghostData.forEach(ghost => {
+        ghosts.push(new Ghost(ghost.x, ghost.y, this.tileSize, ghost.color, ghost.name));
+    });
+
+    return ghosts;
+   }
+
+    /**
      * Inicia el juego
      */
     start() {
@@ -110,9 +133,44 @@ export class GameEngine {
      * Actualiza el estado del juego
      */
     update() {
+
         // Actualizar Pacman
         this.pacman.update(this.map);
+
+        // Actualiza a los fantasmas
+        this.ghosts.forEach(ghost => {
+            ghost.update(this.map, this.pacman);
+        });
+
+        this.checkCollisions();
     }
+
+
+    /**
+    * Verifica colisiones entre Pac-Man y los fantasmas
+    */
+   checkCollisions() {
+    this.ghosts.forEach(ghost => {
+        const distance = Math.sqrt(
+            Math.pow(this.pacman.x - ghost.x, 2) +
+            Math.pow(this.pacman.y - ghost.y, 2)
+        );
+
+        const collisionDistance = this.pacman.radius + ghost.radius;
+
+        if(distance < collisionDistance) {
+            if (ghost.isVulnerable) {
+                // Si Pac-Man se come al fantasma
+                console.log(`¡Pac-man se comió a ${ghost.name}!`);
+                ghost.reset();
+            } else {
+                // Fantasma atrapa a Pac-Man
+                console.log(`¡${ghost.name} atrapó a Pac-Man`);
+                this.pacman.reset();
+            }
+        }
+    });
+   }
 
     /**
      * Renderiza el juego en el canvas
@@ -127,6 +185,11 @@ export class GameEngine {
 
         // Dibujar Pacman
         this.pacman.draw(this.ctx, this.offsetX, this.offsetY);
+
+        // Dibuja a los Fantasmas
+        this.ghosts.forEach(ghost => {
+            ghost.draw(this.ctx, this.offsetX, this.offsetY);
+        });
     }
 
     /**
