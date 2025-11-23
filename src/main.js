@@ -68,7 +68,7 @@ class GameApp {
      */
     startEvolution() {
         const config = this.getConfig();
-        this.ga = new GeneticAlgorithm(config);
+        this.ga = new GeneticAlgorithm(config, null);
         this.gameEngine = new GameEngine(this.canvas, config);
 
         this.isRunning = true;
@@ -77,8 +77,8 @@ class GameApp {
 
         console.log('Iniciando evolución con configuración:', config);
 
-        // Iniciar el motor del juego para visualización y controles manuales
-        this.gameEngine.start();
+        // NO iniciar render durante entrenamiento
+        // this.gameEngine.start();
 
         this.runGeneration();
     }
@@ -89,15 +89,20 @@ class GameApp {
     runGeneration() {
         if (!this.isRunning) return;
 
-        // Luego hay que implementar lógica de evaluación de individuos
+        console.log(`\n>>> Iniciando generación ${this.ga.generation + 1}/${this.ga.config.generations}`);
+        
+        // Evolucionar una generación
         this.ga.evolve();
-        this.currentGeneration++;
+        this.currentGeneration = this.ga.generation;
 
+        // Actualizar métricas en la UI
         this.updateMetrics();
+        this.updateFitnessChart();
 
         // Continuar con la siguiente generación si no hemos llegado al límite
         if (this.currentGeneration < this.ga.config.generations) {
-            requestAnimationFrame(() => this.runGeneration());
+            // Usar setTimeout para no bloquear la UI
+            setTimeout(() => this.runGeneration(), 10);
         } else {
             this.finishEvolution();
         }
@@ -107,15 +112,86 @@ class GameApp {
      * Actualiza las métricas en la interfaz de usuario
      */
     updateMetrics() {
-        // Se deben obtener las métricas reales del algoritmo genético
-        const bestFitness = this.ga.population.getBestFitness().toFixed(2);
-        const avgFitness = this.ga.population.getAverageFitness().toFixed(2);
-
-        document.getElementById('bestFitness').textContent = bestFitness;
-        document.getElementById('avgFitness').textContent = avgFitness;
+        const stats = this.ga.getCurrentStats();
+        
+        document.getElementById('bestFitness').textContent = stats.bestFitness.toFixed(2);
+        document.getElementById('avgFitness').textContent = stats.avgFitness.toFixed(2);
         document.getElementById('currentGeneration').textContent = this.currentGeneration;
+    }
 
-        // Posteriormente hay que actualizar gráfico de fitness
+    /**
+     * Actualiza el gráfico de fitness
+     */
+    updateFitnessChart() {
+        const chartCanvas = document.getElementById('fitnessChart');
+        const ctx = chartCanvas.getContext('2d');
+        const history = this.ga.fitnessHistory;
+        
+        if (history.length === 0) return;
+
+        // Limpiar canvas
+        ctx.fillStyle = '#0f3460';
+        ctx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+
+        // Configuración del gráfico
+        const padding = 40;
+        const chartWidth = chartCanvas.width - 2 * padding;
+        const chartHeight = chartCanvas.height - 2 * padding;
+
+        // Encontrar valores min y max
+        let maxFitness = Math.max(...history.map(h => h.best));
+        let minFitness = Math.min(...history.map(h => h.worst));
+        const fitnessRange = maxFitness - minFitness || 1;
+
+        // Dibujar ejes
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, chartCanvas.height - padding);
+        ctx.lineTo(chartCanvas.width - padding, chartCanvas.height - padding);
+        ctx.stroke();
+
+        // Dibujar líneas
+        const drawLine = (data, color) => {
+            if (data.length < 2) return;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            data.forEach((value, i) => {
+                const x = padding + (i / (history.length - 1)) * chartWidth;
+                const y = chartCanvas.height - padding - ((value - minFitness) / fitnessRange) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+        };
+
+        // Dibujar líneas de fitness
+        drawLine(history.map(h => h.best), '#00ff00');     // Verde: mejor
+        drawLine(history.map(h => h.average), '#ffcc00');  // Amarillo: promedio
+        drawLine(history.map(h => h.worst), '#ff0000');    // Rojo: peor
+
+        // Leyenda
+        ctx.font = '12px Arial';
+        ctx.fillStyle = '#00ff00';
+        ctx.fillText('Mejor', chartCanvas.width - 100, 20);
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillText('Promedio', chartCanvas.width - 100, 35);
+        ctx.fillStyle = '#ff0000';
+        ctx.fillText('Peor', chartCanvas.width - 100, 50);
+
+        // Etiquetas de ejes
+        ctx.fillStyle = '#fff';
+        ctx.fillText('Gen: ' + this.currentGeneration, padding, chartCanvas.height - 10);
+        ctx.fillText('Fitness: ' + maxFitness.toFixed(0), 5, padding);
     }
 
     /**
@@ -130,7 +206,9 @@ class GameApp {
             fps: parseInt(document.getElementById('fps').value),
             mutationRate: 0.1,
             crossoverRate: 0.7,
-            elitismCount: 1
+            elitismCount: 1,
+            tournamentSize: 3,
+            episodesPerIndividual: 1
         };
     }
 
@@ -176,10 +254,31 @@ class GameApp {
             return;
         }
 
-        // Luego debe implementarse la exportación del mejor individuo
-        const bestIndividual = this.ga.population.getBestIndividual();
-        console.log('Exportando mejor individuo:', bestIndividual);
-        alert('Funcionalidad de exportación en desarrollo');
+        const bestIndividual = this.ga.getBestIndividual();
+        if (!bestIndividual) {
+            alert('No hay individuo para exportar');
+            return;
+        }
+
+        const exportData = {
+            fitness: bestIndividual.fitness,
+            genes: bestIndividual.genes,
+            generation: this.currentGeneration,
+            timestamp: new Date().toISOString(),
+            config: this.ga.config
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `best-individual-gen${this.currentGeneration}.json`;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        console.log('Mejor individuo exportado con fitness:', bestIndividual.fitness);
     }
 
     /**
@@ -191,9 +290,19 @@ class GameApp {
             return;
         }
 
-        // Hay que implementar demo del mejor individuo
-        console.log('Iniciando demo del mejor individuo');
-        alert('Funcionalidad de demo en desarrollo');
+        const bestIndividual = this.ga.getBestIndividual();
+        if (!bestIndividual) {
+            alert('No hay mejor individuo para demostrar');
+            return;
+        }
+
+        console.log('Iniciando demo del mejor individuo con fitness:', bestIndividual.fitness);
+        
+        // Detener cualquier evolución en curso
+        this.isRunning = false;
+        
+        // Ejecutar demo visual usando el GameEngine con canvas
+        this.ga.runDemo(this.gameEngine);
     }
 
     /**
