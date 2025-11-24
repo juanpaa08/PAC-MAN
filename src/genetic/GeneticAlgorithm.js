@@ -235,12 +235,13 @@ export class GeneticAlgorithm {
     /**
      * Ejecuta una demo visual del mejor individuo
      * @param {GameEngine} visualEngine - Motor con canvas para visualización
+     * @returns {number} ID del requestAnimationFrame para poder cancelarlo
      */
     runDemo(visualEngine) {
         const best = this.getBestIndividual();
         if (!best) {
             console.log('No hay mejor individuo para demo');
-            return;
+            return null;
         }
 
         console.log('Ejecutando demo del mejor individuo con fitness:', best.fitness);
@@ -248,6 +249,7 @@ export class GeneticAlgorithm {
         visualEngine.resetEpisode();
         visualEngine.isRunning = true;
 
+        let animationId;
         const demoLoop = () => {
             if (!visualEngine.isRunning) return;
 
@@ -264,10 +266,22 @@ export class GeneticAlgorithm {
             }
 
             setTimeout(() => {
-                requestAnimationFrame(demoLoop);
+                animationId = requestAnimationFrame(demoLoop);
             }, 1000 / visualEngine.config.fps);
         };
 
         demoLoop();
+        return animationId;
+    }
+
+    /**
+     * Reinicia el algoritmo genético al estado inicial
+     */
+    reset() {
+        console.log('Reiniciando algoritmo genético...');
+        this.generation = 0;
+        this.fitnessHistory = [];
+        this.population = null;
+        this.evaluationEngine = null;
     }
 }

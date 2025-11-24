@@ -16,6 +16,7 @@ class GameApp {
         this.gameEngine = null;      // Motor del juego Pac-Man
         this.isRunning = false;      // Estado de la evolución
         this.currentGeneration = 0;
+        this.demoAnimationId = null; // ID del requestAnimationFrame para demos
 
         this.initializeElements();
         this.setupEventListeners();
@@ -245,21 +246,61 @@ class GameApp {
      * Reinicia la aplicación al estado inicial
      */
     reset() {
+        console.log('Reiniciando aplicación...');
+        
+        // 1. Detener cualquier ejecución activa
         this.isRunning = false;
+        
+        // Cancelar requestAnimationFrame si hay demo activa
+        if (this.demoAnimationId) {
+            cancelAnimationFrame(this.demoAnimationId);
+            this.demoAnimationId = null;
+        }
+        
+        // Detener GameEngine si está corriendo
+        if (this.gameEngine) {
+            this.gameEngine.stop();
+            this.gameEngine = null;
+        }
+        
+        // 2. Reiniciar el algoritmo genético
+        if (this.ga) {
+            this.ga.reset();
+            this.ga = null;
+        }
+        
+        // 3. Reiniciar variables de estado
         this.currentGeneration = 0;
+        
+        // 4. Restaurar botones de la UI
         this.startBtn.disabled = false;
         this.pauseBtn.disabled = true;
         this.pauseBtn.textContent = 'Pausar';
-
-        // Resetar las métricas de la UI
+        
+        // 5. Resetear métricas visuales
         document.getElementById('bestFitness').textContent = '0';
         document.getElementById('avgFitness').textContent = '0';
         document.getElementById('currentGeneration').textContent = '0';
-
-        // Mostrar vista previa del mapa nuevamente
+        
+        // 6. Limpiar gráfico de fitness
+        this.clearFitnessChart();
+        
+        // 7. Mostrar vista previa del mapa
         this.showMapPreview();
-
-        console.log('Aplicación reiniciada');
+        
+        console.log('Aplicación reiniciada correctamente');
+    }
+    
+    /**
+     * Limpia el gráfico de fitness
+     */
+    clearFitnessChart() {
+        const chartCanvas = document.getElementById('fitnessChart');
+        if (chartCanvas) {
+            const ctx = chartCanvas.getContext('2d');
+            ctx.fillStyle = '#0f3460';
+            ctx.fillRect(0, 0, chartCanvas.width, chartCanvas.height);
+        }
     }
 
     /**
@@ -318,8 +359,17 @@ class GameApp {
         // Detener cualquier evolución en curso
         this.isRunning = false;
         
-        // Ejecutar demo visual usando el GameEngine con canvas
-        this.ga.runDemo(this.gameEngine);
+        // Cancelar demo anterior si existe
+        if (this.demoAnimationId) {
+            cancelAnimationFrame(this.demoAnimationId);
+        }
+        
+        // Crear un nuevo GameEngine para la demo
+        const demoConfig = this.getConfig();
+        this.gameEngine = new GameEngine(this.canvas, demoConfig);
+        
+        // Ejecutar demo visual y guardar el animation ID
+        this.demoAnimationId = this.ga.runDemo(this.gameEngine);
     }
 
     /**
