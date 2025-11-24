@@ -61,6 +61,23 @@ class GameApp {
         this.resetBtn.addEventListener('click', () => this.reset());
         this.exportBtn.addEventListener('click', () => this.exportBest());
         this.demoBtn.addEventListener('click', () => this.demoBest());
+
+        document.getElementById('manualBtn').addEventListener('click', () => {
+            
+            // Detiene el juego anterior
+            if (this.gameEngine && this.gameEngine.isRunning) {
+                this.gameEngine.stop();
+             }
+
+            const manualConfig = {
+                fps: 30,
+                populationSize: 1,
+                generations: 1
+            };
+            this.gameEngine = new GameEngine(this.canvas, manualConfig);
+            this.gameEngine.start();
+            console.log('Modo manual iniciado - Velocidad normal');
+     });
     }
 
     /**

@@ -2,7 +2,7 @@
 
 Proyecto de algoritmo genético que entrena un agente para jugar Pac-Man usando una política basada en pesos heurísticos.
 
-## 🎮 Descripción
+## Descripción
 
 Este proyecto implementa un algoritmo genético completo que evoluciona agentes capaces de jugar Pac-Man. Los agentes utilizan un vector de pesos (genes) que puntúan diferentes acciones basándose en características observables del juego.
 
@@ -28,7 +28,7 @@ Este proyecto implementa un algoritmo genético completo que evoluciona agentes 
 3. **Mutación**: Gaussiana con tasa configurable
 4. **Reemplazo**: Generacional con elitismo (≥1 mejor individuo)
 
-## 🚀 Cómo Usar
+## Cómo Usar
 
 ### Iniciar el Proyecto
 1. Abre `index.html` en un navegador web moderno
@@ -53,7 +53,7 @@ Este proyecto implementa un algoritmo genético completo que evoluciona agentes 
 - **Pausar/Reanudar**: Controla la evolución en cualquier momento
 - **Reiniciar**: Resetea el entrenamiento
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 PAC-MAN-P2/
@@ -76,36 +76,36 @@ PAC-MAN-P2/
         └── Individual.js        # Representación del individuo
 ```
 
-## 🎯 Características Implementadas
+## Características Implementadas
 
 ### Algoritmo Genético
-✅ Población con individuos aleatorios
-✅ Evaluación de fitness con episodios de juego
-✅ Selección por torneo
-✅ Cruzamiento de un punto
-✅ Mutación gaussiana
-✅ Elitismo
-✅ Generador de números aleatorios con semilla
-✅ Historial de fitness por generación
+Población con individuos aleatorios
+Evaluación de fitness con episodios de juego
+Selección por torneo
+Cruzamiento de un punto
+Mutación gaussiana
+Elitismo
+Generador de números aleatorios con semilla
+Historial de fitness por generación
 
 ### Motor del Juego
-✅ Mapa clásico de Pac-Man (28×31)
-✅ Modo evaluación rápida (sin render)
-✅ Modo demo visual (con canvas)
-✅ Sistema de pellets
-✅ Detección de colisiones
-✅ 4 fantasmas con movimiento aleatorio
-✅ Sistema de recompensas/penalizaciones
+Mapa clásico de Pac-Man (28×31)
+Modo evaluación rápida (sin render)
+Modo demo visual (con canvas)
+Sistema de pellets
+Detección de colisiones
+4 fantasmas con movimiento aleatorio
+Sistema de recompensas/penalizaciones
 
 ### Interfaz de Usuario
-✅ Panel de control con parámetros
-✅ Métricas en tiempo real
-✅ Gráfico de evolución de fitness
-✅ Visualización del juego
-✅ Exportación de resultados
-✅ Demo del mejor individuo
+Panel de control con parámetros
+Métricas en tiempo real
+Gráfico de evolución de fitness
+Visualización del juego
+Exportación de resultados
+Demo del mejor individuo
 
-## 🔬 Detalles Técnicos
+## Detalles Técnicos
 
 ### Parámetros Configurables
 - `populationSize`: Tamaño de población (≥20)
@@ -130,7 +130,7 @@ PAC-MAN-P2/
 - Mejor individuo jugando
 - Visualización a velocidad configurable
 
-## 📊 Resultados Esperados
+## Resultados Esperados
 
 El algoritmo genético debería:
 - Mejorar progresivamente el fitness a lo largo de las generaciones
@@ -138,14 +138,14 @@ El algoritmo genético debería:
 - Desarrollar estrategias de recolección de pellets
 - Mostrar convergencia en el gráfico de fitness
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 - HTML5 Canvas para renderizado
 - JavaScript ES6+ con módulos
 - Arquitectura orientada a objetos
 - Sin dependencias externas
 
-## 📝 Notas
+## Notas
 
 - El proyecto respeta las restricciones de la especificación GA-Arcade
 - Usa solo información observable por un jugador legal
@@ -153,7 +153,7 @@ El algoritmo genético debería:
 - Implementa reproducibilidad mediante semillas
 - Sigue buenas prácticas de diseño de software
 
-## 👨‍💻 Autor
+## Autor
 
 Proyecto académico - Análisis de Algoritmos
 TEC - Semestre II 2025

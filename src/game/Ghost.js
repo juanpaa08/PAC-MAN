@@ -65,10 +65,21 @@ export class Ghost {
      * @param {Pacman} pacman - Referencia a Pac-Man
      */
     update(map, pacman) {
-        // Cambia la dirección aleatoriamente de forma básica
-        if (Math.random() < 0.02) { // 2% de oportunidad en cada frame
-            this.direction = this.getRandomDirection();
+
+        // Comportamiento distinto si es vulnerable
+        if (this.isVulnerable) {
+            // Huye de Pac-Man en lugar de perseguirlo
+            if (Math.random() < 0.1) {  // 10% de probabilidades de cambiar de dirección
+                this.direction = this.getFleeDirection(pacman);
+            }
+        } else {
+            // Comportamiento normal, de persecución aleatoria
+            if (Math.random() < 0.02) { // 2% de oportunidad en cada frame
+                this.direction = this.getRandomDirection();
+            }
         }
+
+        
 
         // Intenta mover en la dirección actual
         if (this.canMove(this.direction.x, this.direction.y, map)) {
@@ -90,6 +101,34 @@ export class Ghost {
                 this.isVulnerable = false;
             }
         }
+    }
+
+    /**
+    * Obtiene dirección para huir de Pac-Man
+    */
+    getFleeDirection(pacman) {
+        const directions = [
+            { x: 1, y: 0},   // Derecha
+            { x: -1, y: 0},  // Izquierda
+            { x: 0, y: 1},   // Abajo
+            { x: 0, y: -1}   // Arriba
+        ];
+
+        // Calcula la dirección opuesta a Pac-Man
+        const dx = this.x - pacman.x;
+        const dy = this.y - pacman.y;
+
+        // Prefiere direcciones que se alejen de Pac-Man
+        const scoredDirections = directions.map(dir => {
+            let score = 0;
+            if (Math.sign(dir.x) === Math.sign(dx)) score += 2;
+            if (Math.sign(dir.y) === Math.sign(dy)) score += 2;
+            return { direction: dir, score };
+        });
+
+        // Elige la dirección con mejor score
+        scoredDirections.sort((a, b) => b.score - a.score);
+        return scoredDirections[0].direction;
     }
 
     /**

@@ -43,6 +43,10 @@ export class GameEngine {
         this.isDead = false;
         this.maxSteps = 1000; // Límite de pasos por episodio
 
+        // Sistema de una sola vida
+        this.lives = 1;
+        this.gameOver = false;
+
         // Configurar controles manuales para pruebas (solo si hay canvas)
         if (canvas) {
             this.setupControls();
@@ -56,14 +60,35 @@ export class GameEngine {
      */
     initializePellets() {
         this.pellets = [];
+        this.powerPellets = [];
         for (let y = 0; y < this.mapHeight; y++) {
             this.pellets[y] = [];
+            this.powerPellets[y] = [];
             for (let x = 0; x < this.mapWidth; x++) {
                 // Colocar pellet si es camino (0)
                 this.pellets[y][x] = this.map[y][x] === 0 ? 1 : 0;
+                this.powerPellets[y][x] = 0;
             }
         }
+
+        // Coloca 4 power pellets en las esquinas
+        const powerPelletPositions = [
+            {x: 1, y: 3},   // Esquina superior izquierda
+            {x: 26, y: 3},  // Esquina superior derecha
+            {x: 1, y: 23},  // Esquina inferior izquierda
+            {x: 26, y: 23}  // Esquina inferior derecha
+        ];
+
+        powerPelletPositions.forEach(pos => {
+            if (this.map[pos.y] && this.map[pos.y][pos.x] == 0) {
+                this.powerPellets[pos.y][pos.x] = 1;
+                // Quita los pellet normales de esa posición
+                this.pellets[pos.y][pos.x] = 0;
+            }
+        });
+
         this.totalPellets = this.pellets.flat().reduce((a, b) => a + b, 0);
+        this.totalPowerPellets = this.powerPellets.flat().reduce((a,b) => a + b, 0);
     }
 
     /**
@@ -166,6 +191,8 @@ export class GameEngine {
         this.pelletsEaten = 0;
         this.steps = 0;
         this.isDead = false;
+        this.gameOver = false;
+        this.lives = 1;
     }
 
     /**
@@ -178,7 +205,7 @@ export class GameEngine {
             return { reward: 0, done: true, pelletsEaten: this.pelletsEaten, score: this.score };
         }
 
-        // Establecer dirección de Pac-Man
+        // Establece la dirección de Pac-Man
         if (action && action !== 'STOP') {
             this.pacman.setDirection(action);
         }
@@ -186,9 +213,17 @@ export class GameEngine {
         // Actualizar Pacman
         this.pacman.update(this.map);
 
-        // Actualizar fantasmas
+        // Actualiza a los fantasmas
         this.ghosts.forEach(ghost => {
             ghost.update(this.map, this.pacman);
+
+            // Se reduce el timer de vulnerabilidad si están en ese estado
+            if (ghost.isVulnerable && ghost.vulnerableTimer > 0) {
+                ghost.vulnerableTimer--;
+                if (ghost.vulnerableTimer <= 0) {
+                    ghost.isVulnerable = false;
+                }
+            }
         });
 
         this.steps++;
@@ -200,12 +235,26 @@ export class GameEngine {
         const gridX = Math.floor(this.pacman.x / this.tileSize);
         const gridY = Math.floor(this.pacman.y / this.tileSize);
         
+        
         if (gridX >= 0 && gridX < this.mapWidth && gridY >= 0 && gridY < this.mapHeight) {
+            // Verifica si come pellet normal
             if (this.pellets[gridY][gridX] === 1) {
                 this.pellets[gridY][gridX] = 0;
                 this.pelletsEaten++;
                 this.score += 10;
                 reward += 10; // Recompensa por comer pellet
+            }
+
+            // Verifica si come power pellet
+            if (this.powerPellets[gridY][gridX] == 1) {
+                this.powerPellets[gridY][gridX] = 0;
+                this.score += 50;
+                reward += 50;  // Gran recompensa por powe pellet
+
+                // Hace a todos los fantasmas vulnerables
+                this.ghosts.forEach(ghost => {
+                    ghost.makeVulnerable(300);  // 300 frames , que son como 10 segundos
+                });
             }
         }
 
@@ -221,7 +270,9 @@ export class GameEngine {
             reward += 5;
         }
 
-        const done = this.isDead || this.steps >= this.maxSteps || this.pelletsEaten === this.totalPellets;
+        const done = this.isDead || this.steps >= this.maxSteps || 
+        (this.pelletsEaten === this.totalPellets && 
+            this.powerPellets.flat().reduce((a, b) => a + b,0) === 0);
 
         return { 
             reward, 
@@ -309,15 +360,51 @@ export class GameEngine {
             ghost.update(this.map, this.pacman);
         });
 
-        this.checkCollisions();
+        const deadlyCollision = this.checkCollisions();
+        if (deadlyCollision) {
+            this.isDead = true;
+            this.isRunning = false; // DETENER EL JUEGO
+        }
     }
 
     /**
-    * Verifica colisiones entre Pac-Man y los fantasmas
-    * @returns {boolean} - true si hay colisión mortal
-    */
+     * Verifica colisiones entre Pac-Man y fantasmas + pellets
+     * @returns {boolean} - true si hay colisión mortal con fantasma
+     */
     checkCollisions() {
         let deadly = false;
+        
+        // Verifica los pellets primero
+        const gridX = Math.floor(this.pacman.x / this.tileSize);
+        const gridY = Math.floor(this.pacman.y / this.tileSize);
+        
+        if (gridX >= 0 && gridX < this.mapWidth && gridY >= 0 && gridY < this.mapHeight) {
+            // Verifica el pellet normal
+            if (this.pellets[gridY][gridX] === 1) {
+                this.pellets[gridY][gridX] = 0;
+                this.pelletsEaten++;
+                this.score += 10;
+                if (this.renderMode) {
+                    console.log(`¡Pellet comido! Score: ${this.score}`);
+                }
+            }
+            
+            // Verifica el power pellet
+            if (this.powerPellets[gridY][gridX] === 1) {
+                this.powerPellets[gridY][gridX] = 0;
+                this.score += 50;
+                if (this.renderMode) {
+                    console.log('¡Power pellet comido! Fantasmas vulnerables');
+                }
+                
+                // Hace a todos los fantasmas vulnerables
+                this.ghosts.forEach(ghost => {
+                    ghost.makeVulnerable(300);
+                });
+            }
+        }
+        
+        // Verifica las colisiones con fantasmas
         this.ghosts.forEach(ghost => {
             const distance = Math.sqrt(
                 Math.pow(this.pacman.x - ghost.x, 2) +
@@ -328,9 +415,9 @@ export class GameEngine {
 
             if (distance < collisionDistance) {
                 if (ghost.isVulnerable) {
-                    // Si Pac-Man se come al fantasma
+                    // Pac-Man come al fantasma
                     if (this.renderMode) {
-                        console.log(`¡Pac-man se comió a ${ghost.name}!`);
+                        console.log(`¡Pac-man se comió a ${ghost.name}! +50 puntos`);
                     }
                     ghost.reset();
                     this.score += 50;
@@ -343,6 +430,12 @@ export class GameEngine {
                 }
             }
         });
+        
+        // Maneja la muerte si hay colision mortal
+        if (deadly && !this.isDead && !this.gameOver) {
+            this.handleDeath();
+        }
+        
         return deadly;
     }
 
@@ -372,25 +465,41 @@ export class GameEngine {
     drawMap() {
         const wallThickness = 3; // Grosor de las paredes
 
-        // Primero dibujar pellets en los caminos
+        // Primero dibuja pellets en los caminos
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 const tile = this.map[y][x];
                 const drawX = this.offsetX + x * this.tileSize;
                 const drawY = this.offsetY + y * this.tileSize;
 
-                if (tile === 0 && this.pellets && this.pellets[y][x] === 1) {
-                    // Pellets pequeños en los caminos (solo si aún no se han comido)
-                    this.ctx.fillStyle = '#ffb897';
-                    this.ctx.beginPath();
-                    this.ctx.arc(
-                        drawX + this.tileSize / 2,
-                        drawY + this.tileSize / 2,
-                        2,
-                        0,
-                        Math.PI * 2
-                    );
-                    this.ctx.fill();
+                if (tile === 0) {
+                    // Verificar si el pellet normal existe
+                    if (this.pellets && this.pellets[y] && this.pellets[y][x] === 1) {
+                        this.ctx.fillStyle = '#ffb897';
+                        this.ctx.beginPath();
+                        this.ctx.arc(
+                            drawX + this.tileSize / 2,
+                            drawY + this.tileSize / 2,
+                            2,
+                            0,
+                            Math.PI * 2
+                        );
+                        this.ctx.fill();
+                    }
+                    
+                    // Verifica si el power pellet existe  
+                    if (this.powerPellets && this.powerPellets[y] && this.powerPellets[y][x] === 1) {
+                        this.ctx.fillStyle = '#ff6b6b';
+                        this.ctx.beginPath();
+                        this.ctx.arc(
+                            drawX + this.tileSize / 2,
+                            drawY + this.tileSize / 2,
+                            6,
+                            0,
+                            Math.PI * 2
+                        );
+                        this.ctx.fill();
+                    }
                 }
             }
         }
@@ -478,4 +587,21 @@ export class GameEngine {
             }
         });
     }
+
+
+    /**
+     * Maneja la muerte de Pac-Man
+     */
+    handleDeath() {
+        this.lives = 0;
+        this.gameOver = true;
+        this.isRunning = false;
+        this.isDead = true;
+        
+        if (this.renderMode) {
+            console.log('GAME OVER - Episodio terminado');
+        }
+    }
+
+
 }
