@@ -262,6 +262,13 @@ export class GeneticAlgorithm {
             if (result.done) {
                 console.log('Demo finalizada. Score:', result.score, 'Pellets:', result.pelletsEaten);
                 visualEngine.isRunning = false;
+                
+                // Reiniciar automáticamente después de 2 segundos
+                setTimeout(() => {
+                    if (window.GA_Pacman_App) {
+                        window.GA_Pacman_App.reset();
+                    }
+                }, 2000);
                 return;
             }
 

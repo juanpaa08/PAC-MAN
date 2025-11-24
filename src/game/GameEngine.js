@@ -194,6 +194,11 @@ export class GameEngine {
         this.isDead = false;
         this.gameOver = false;
         this.lives = 1;
+        this.lastPositions = [];
+        this.lastAction = null;
+        this.sameActionCount = 0;
+        this.pelletsEatenStreak = 0;
+        this.lastPelletsEaten = 0;
     }
 
     /**
@@ -229,13 +234,18 @@ export class GameEngine {
 
         this.steps++;
 
-        // Recompensa por seguir vivo
-        let reward = 0.1;
+        // === SISTEMA DE RECOMPENSAS MEJORADO ===
+        let reward = 0;
+        
+        // 1. BONUS DE SUPERVIVENCIA (aumenta con el tiempo)
+        const survivalBonus = 0.1 * (1 + this.steps / 1000);
+        reward += survivalBonus;
 
         // Verificar si Pac-Man come pellet
         const gridX = Math.floor(this.pacman.x / this.tileSize);
         const gridY = Math.floor(this.pacman.y / this.tileSize);
         
+        let atePelletThisStep = false;
         
         if (gridX >= 0 && gridX < this.mapWidth && gridY >= 0 && gridY < this.mapHeight) {
             // Verifica si come pellet normal
@@ -244,18 +254,79 @@ export class GameEngine {
                 this.pelletsEaten++;
                 this.score += 10;
                 reward += 10; // Recompensa por comer pellet
+                atePelletThisStep = true;
+                this.pelletsEatenStreak++;
+                
+                // 2. COMBO BONUS: Recompensa extra por comer pellets consecutivos
+                if (this.pelletsEatenStreak > 1) {
+                    const comboBonus = Math.min(this.pelletsEatenStreak * 2, 20);
+                    reward += comboBonus;
+                }
             }
 
             // Verifica si come power pellet
             if (this.powerPellets[gridY][gridX] == 1) {
                 this.powerPellets[gridY][gridX] = 0;
                 this.score += 50;
-                reward += 50;  // Gran recompensa por powe pellet
+                reward += 50;  // Gran recompensa por power pellet
+                atePelletThisStep = true;
 
                 // Hace a todos los fantasmas vulnerables
                 this.ghosts.forEach(ghost => {
                     ghost.makeVulnerable(300);  // 300 frames , que son como 10 segundos
                 });
+            }
+        }
+        
+        // Resetear streak si no comió pellet
+        if (!atePelletThisStep) {
+            this.pelletsEatenStreak = 0;
+        }
+
+        // 3. PENALIZACIÓN POR MOVIMIENTO REPETITIVO
+        if (action === this.lastAction) {
+            this.sameActionCount++;
+            // Penalizar si hace la misma acción muchas veces sin comer pellets
+            if (this.sameActionCount > 10 && this.pelletsEaten === this.lastPelletsEaten) {
+                reward -= 0.5;
+            }
+        } else {
+            this.sameActionCount = 0;
+        }
+        this.lastAction = action;
+        this.lastPelletsEaten = this.pelletsEaten;
+
+        // 4. PENALIZACIÓN POR ESTAR EN LOOP (misma posición visitada recientemente)
+        const currentPos = `${gridX},${gridY}`;
+        this.lastPositions.push(currentPos);
+        if (this.lastPositions.length > 20) {
+            this.lastPositions.shift();
+            // Contar cuántas veces ha visitado esta posición recientemente
+            const posCount = this.lastPositions.filter(pos => pos === currentPos).length;
+            if (posCount > 5) {
+                reward -= 2; // Penalización por estar atrapado en un loop
+            }
+        }
+
+        // 5. PENALIZACIÓN POR ESTAR EN ESQUINAS CON PELIGRO
+        const freeDirections = [
+            this.pacman.canMove(0, -1, this.map),
+            this.pacman.canMove(0, 1, this.map),
+            this.pacman.canMove(-1, 0, this.map),
+            this.pacman.canMove(1, 0, this.map)
+        ].filter(d => d).length;
+        
+        if (freeDirections <= 2) {
+            // Verificar si hay fantasmas cercanos
+            const nearbyGhosts = this.ghosts.filter(ghost => {
+                const gx = ghost.x / this.tileSize;
+                const gy = ghost.y / this.tileSize;
+                const dist = Math.sqrt(Math.pow(gridX - gx, 2) + Math.pow(gridY - gy, 2));
+                return dist < 3 && !ghost.isVulnerable;
+            });
+            
+            if (nearbyGhosts.length > 0) {
+                reward -= 5; // Penalización por estar atrapado cerca de fantasmas
             }
         }
 
@@ -266,9 +337,14 @@ export class GameEngine {
             reward = -100; // Penalización fuerte por morir
         }
 
-        // Bonus si come muchos pellets
-        if (this.pelletsEaten > this.totalPellets * 0.5) {
-            reward += 5;
+        // 6. BONUS POR PROGRESO: Recompensa extra por comer porcentaje significativo
+        const progressPercent = this.pelletsEaten / this.totalPellets;
+        if (progressPercent > 0.25 && progressPercent <= 0.5) {
+            reward += 10;
+        } else if (progressPercent > 0.5 && progressPercent <= 0.75) {
+            reward += 20;
+        } else if (progressPercent > 0.75) {
+            reward += 30;
         }
 
         const done = this.isDead || this.steps >= this.maxSteps || 
@@ -661,6 +737,13 @@ export class GameEngine {
         
         if (this.renderMode) {
             console.log('GAME OVER - Episodio terminado');
+            
+            // Esperar 2 segundos y luego reiniciar automáticamente
+            setTimeout(() => {
+                if (window.GA_Pacman_App) {
+                    window.GA_Pacman_App.reset();
+                }
+            }, 2000);
         }
     }
 
