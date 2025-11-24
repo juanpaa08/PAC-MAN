@@ -20,11 +20,12 @@ export class GameEngine {
         // Dimensiones del mapa
         this.mapWidth = 28;
         this.mapHeight = 31;
-        this.tileSize = canvas ? Math.floor(Math.min(canvas.width / this.mapWidth, canvas.height / this.mapHeight)) : 20;
+        this.scoreboardHeight = 35; // Espacio para el marcador
+        this.tileSize = canvas ? Math.floor(Math.min(canvas.width / this.mapWidth, (canvas.height - this.scoreboardHeight) / this.mapHeight)) : 20;
 
-        // Offset para centrar el mapa
+        // Offset para centrar el mapa (con espacio para el marcador)
         this.offsetX = canvas ? (canvas.width - this.mapWidth * this.tileSize) / 2 : 0;
-        this.offsetY = canvas ? (canvas.height - this.mapHeight * this.tileSize) / 2 : 0;
+        this.offsetY = canvas ? this.scoreboardHeight + ((canvas.height - this.scoreboardHeight - this.mapHeight * this.tileSize) / 2) : 0;
 
         // Inicializar el mapa
         this.initializeMap();
@@ -447,6 +448,9 @@ export class GameEngine {
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Dibujar contador de puntos en la parte superior
+        this.drawScoreBoard();
+
         // Dibujar el mapa
         this.drawMap();
 
@@ -457,6 +461,54 @@ export class GameEngine {
         this.ghosts.forEach(ghost => {
             ghost.draw(this.ctx, this.offsetX, this.offsetY);
         });
+    }
+
+    /**
+     * Dibuja el marcador de puntos estilo Pac-Man original
+     */
+    drawScoreBoard() {
+        // Fondo negro en la parte superior
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, 30);
+
+        // Texto "SCORE" en blanco
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 20px "Courier New", monospace';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText('SCORE', 10, 24);
+
+        // Puntuación actual en blanco
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 22px "Courier New", monospace';
+        const scoreText = this.score.toString().padStart(5, '0');
+        this.ctx.fillText(scoreText, 90, 24);
+
+        // Texto "HIGH SCORE" en el centro
+        this.ctx.fillStyle = '#FFF';
+        this.ctx.font = 'bold 20px "Courier New", monospace';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('HIGH SCORE', this.canvas.width / 2, 24);
+
+        // High score (por ahora igual al score)
+        this.ctx.font = 'bold 22px "Courier New", monospace';
+        const highScoreText = Math.max(this.score, 0).toString().padStart(5, '0');
+        this.ctx.fillText(highScoreText, this.canvas.width / 2 + 100, 24);
+
+        // Vidas restantes (representadas con íconos de Pac-Man pequeños)
+        this.ctx.fillStyle = '#FFFF00';
+        for (let i = 0; i < this.lives; i++) {
+            const x = this.canvas.width - 40 - (i * 25);
+            const y = 17;
+            
+            // Dibuja mini Pac-Man
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 8, 0.2 * Math.PI, 1.8 * Math.PI);
+            this.ctx.lineTo(x, y);
+            this.ctx.fill();
+        }
+
+        // Resetear alineación de texto
+        this.ctx.textAlign = 'left';
     }
 
     /**
@@ -570,6 +622,15 @@ export class GameEngine {
     setupControls() {
         window.addEventListener('keydown', (e) => {
             if (!this.isRunning) return;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'ArrowDown':
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    e.preventDefault(); // Prevenir scroll del navegador
+                    break;
+            }
 
             switch (e.key) {
                 case 'ArrowUp':
