@@ -43,6 +43,15 @@ export class GameEngine {
         this.steps = 0;
         this.isDead = false;
         this.maxSteps = 1000; // Límite de pasos por episodio
+        this.lastAction = null;
+        this.oscillationCount = 0;
+        this.recentPositions = [];
+
+
+        // Sistema de memoria y exploración
+        this.visitedCells = new Set(); // Celdas visitadas recientemente
+        this.lastVisitedUpdate = 0;
+
 
         // Sistema de una sola vida
         this.lives = 1;
@@ -216,7 +225,7 @@ export class GameEngine {
             this.pacman.setDirection(action);
         }
 
-        // Actualizar Pacman
+        // Actualiza a Pacman
         this.pacman.update(this.map);
 
         // Actualiza a los fantasmas
@@ -234,17 +243,13 @@ export class GameEngine {
 
         this.steps++;
 
-        // === SISTEMA DE RECOMPENSAS MEJORADO ===
         let reward = 0;
         
-        // 1. BONUS DE SUPERVIVENCIA (aumenta con el tiempo)
-        const survivalBonus = 0.1 * (1 + this.steps / 1000);
-        reward += survivalBonus;
-
-        // Verificar si Pac-Man come pellet
+        // Verifica si Pac-Man come pellet
         const gridX = Math.floor(this.pacman.x / this.tileSize);
         const gridY = Math.floor(this.pacman.y / this.tileSize);
         
+        // Recompensa fuerte por obejtivo principal
         let atePelletThisStep = false;
         
         if (gridX >= 0 && gridX < this.mapWidth && gridY >= 0 && gridY < this.mapHeight) {
@@ -253,99 +258,126 @@ export class GameEngine {
                 this.pellets[gridY][gridX] = 0;
                 this.pelletsEaten++;
                 this.score += 10;
-                reward += 10; // Recompensa por comer pellet
+                reward += 15; // Aumenta la recompensa por pellet
                 atePelletThisStep = true;
-                this.pelletsEatenStreak++;
-                
-                // 2. COMBO BONUS: Recompensa extra por comer pellets consecutivos
-                if (this.pelletsEatenStreak > 1) {
-                    const comboBonus = Math.min(this.pelletsEatenStreak * 2, 20);
-                    reward += comboBonus;
-                }
             }
 
             // Verifica si come power pellet
             if (this.powerPellets[gridY][gridX] == 1) {
                 this.powerPellets[gridY][gridX] = 0;
                 this.score += 50;
-                reward += 50;  // Gran recompensa por power pellet
+                reward += 60;  // Gran recompensa por power pellet
                 atePelletThisStep = true;
 
                 // Hace a todos los fantasmas vulnerables
                 this.ghosts.forEach(ghost => {
-                    ghost.makeVulnerable(300);  // 300 frames , que son como 10 segundos
+                    ghost.makeVulnerable(300);  // 300 frames, que son como 10 segundos
                 });
             }
         }
-        
-        // Resetear streak si no comió pellet
-        if (!atePelletThisStep) {
-            this.pelletsEatenStreak = 0;
-        }
 
-        // 3. PENALIZACIÓN POR MOVIMIENTO REPETITIVO
-        if (action === this.lastAction) {
-            this.sameActionCount++;
-            // Penalizar si hace la misma acción muchas veces sin comer pellets
-            if (this.sameActionCount > 10 && this.pelletsEaten === this.lastPelletsEaten) {
-                reward -= 0.5;
-            }
-        } else {
-            this.sameActionCount = 0;
-        }
-        this.lastAction = action;
-        this.lastPelletsEaten = this.pelletsEaten;
-
-        // 4. PENALIZACIÓN POR ESTAR EN LOOP (misma posición visitada recientemente)
-        const currentPos = `${gridX},${gridY}`;
-        this.lastPositions.push(currentPos);
-        if (this.lastPositions.length > 20) {
-            this.lastPositions.shift();
-            // Contar cuántas veces ha visitado esta posición recientemente
-            const posCount = this.lastPositions.filter(pos => pos === currentPos).length;
-            if (posCount > 5) {
-                reward -= 2; // Penalización por estar atrapado en un loop
-            }
-        }
-
-        // 5. PENALIZACIÓN POR ESTAR EN ESQUINAS CON PELIGRO
-        const freeDirections = [
-            this.pacman.canMove(0, -1, this.map),
-            this.pacman.canMove(0, 1, this.map),
-            this.pacman.canMove(-1, 0, this.map),
-            this.pacman.canMove(1, 0, this.map)
-        ].filter(d => d).length;
-        
-        if (freeDirections <= 2) {
-            // Verificar si hay fantasmas cercanos
-            const nearbyGhosts = this.ghosts.filter(ghost => {
-                const gx = ghost.x / this.tileSize;
-                const gy = ghost.y / this.tileSize;
-                const dist = Math.sqrt(Math.pow(gridX - gx, 2) + Math.pow(gridY - gy, 2));
-                return dist < 3 && !ghost.isVulnerable;
-            });
-            
-            if (nearbyGhosts.length > 0) {
-                reward -= 5; // Penalización por estar atrapado cerca de fantasmas
-            }
-        }
-
-        // Verificar colisiones con fantasmas
+        // Penalización fuerte por morir
         const collision = this.checkCollisions();
         if (collision) {
             this.isDead = true;
-            reward = -100; // Penalización fuerte por morir
+            reward = -300; // Aumenta penalización por muerte
         }
 
-        // 6. BONUS POR PROGRESO: Recompensa extra por comer porcentaje significativo
+        // Recompensa por progreso
         const progressPercent = this.pelletsEaten / this.totalPellets;
-        if (progressPercent > 0.25 && progressPercent <= 0.5) {
-            reward += 10;
-        } else if (progressPercent > 0.5 && progressPercent <= 0.75) {
-            reward += 20;
-        } else if (progressPercent > 0.75) {
-            reward += 30;
+        if (progressPercent > 0.5) reward += 25;
+        if (progressPercent > 0.75) reward += 50;
+        if (progressPercent === 1) reward += 100; // Bonus por completar nivel
+
+        // Recompensa por supervivencia
+        reward += 0.05; // Pequeña recompensa por cada paso vivo
+
+        // Penalización por movimiento oscilante repetitivo
+        if (this.lastAction && action !== 'STOP') {
+            const oppositePairs = [
+                ['UP', 'DOWN'],
+                ['DOWN', 'UP'], 
+                ['LEFT', 'RIGHT'],
+                ['RIGHT', 'LEFT']
+            ];
+            
+            // Verifica si está oscilando entre direcciones opuestas
+            for (let [dir1, dir2] of oppositePairs) {
+                if ((this.lastAction === dir1 && action === dir2) || 
+                    (this.lastAction === dir2 && action === dir1)) {
+                    this.oscillationCount = (this.oscillationCount || 0) + 1;
+                    
+                    // Penaliza fuertemente después de 2 oscilaciones
+                    if (this.oscillationCount > 2) {
+                        reward -= 3;
+                    }
+                    break;
+                }
+            }
+            
+            // Resetea contador si no está oscilando
+            if (!oppositePairs.some(([dir1, dir2]) => 
+                (this.lastAction === dir1 && action === dir2) || 
+                (this.lastAction === dir2 && action === dir1))) {
+                this.oscillationCount = 0;
+            }
         }
+
+        // Penalización por estar en la misma zona mucho tiempo
+        const currentPos = `${Math.floor(this.pacman.x / this.tileSize)},${Math.floor(this.pacman.y / this.tileSize)}`;
+        this.recentPositions = this.recentPositions || [];
+        this.recentPositions.push(currentPos);
+
+        // Mantiene solo las últimas 15 posiciones
+        if (this.recentPositions.length > 15) {
+            this.recentPositions.shift();
+        }
+
+        // Cuenta las veces que ha estado en la posición actual recientemente
+        const currentPosCount = this.recentPositions.filter(pos => pos === currentPos).length;
+        if (currentPosCount > 8) {
+            reward -= 2; // Penaliza por estar atascado
+        }
+
+        // Recompensa por movimento continuo
+        if (action !== 'STOP' && action === this.lastAction) {
+            reward += 0.1; // Recompensar mantener dirección
+        }
+
+        // Penalización por quedarse quieto
+        if (action === 'STOP') {
+            reward -= 1; // Penaliza por no moverse
+        }
+
+
+        // Registra celdas visitadas, cada 10 pasos
+        if (this.steps % 10 === 0) {
+            const currentCell = `${Math.floor(this.pacman.x / this.tileSize)},${Math.floor(this.pacman.y / this.tileSize)}`;
+            this.visitedCells.add(currentCell);
+            
+            // Mantiene solo las últimas 30 celdas visitadas
+            if (this.visitedCells.size > 30) {
+                const firstCell = this.visitedCells.values().next().value;
+                this.visitedCells.delete(firstCell);
+            }
+        }
+
+        // Recompensa por explorar nuevas áreas
+        const currentCell = `${Math.floor(this.pacman.x / this.tileSize)},${Math.floor(this.pacman.y / this.tileSize)}`;
+        if (!this.visitedCells.has(currentCell)) {
+            reward += 2; // Recompensa por explorar área nueva
+        }
+
+        // Penalización por pasar mucho tiempo en áreas vacías
+        if (this.steps > 100) { // Solo después de estabilizarse
+            const pelletsInArea = this.countPelletsInRadius(gridX, gridY, 5);
+            if (pelletsInArea === 0 && this.visitedCells.has(currentCell)) {
+                reward -= 1; // Penaliza estar en área vacía ya visitada
+            }
+        }
+
+
+        this.lastAction = action;
 
         const done = this.isDead || this.steps >= this.maxSteps || 
         (this.pelletsEaten === this.totalPellets && 
@@ -360,6 +392,49 @@ export class GameEngine {
         };
     }
 
+
+    /**
+     * Cuenta pellets en un radio alrededor de una posición
+     */
+    countPelletsInRadius(centerX, centerY, radius) {
+        let count = 0;
+        for (let y = Math.max(0, centerY - radius); y <= Math.min(this.mapHeight - 1, centerY + radius); y++) {
+            for (let x = Math.max(0, centerX - radius); x <= Math.min(this.mapWidth - 1, centerX + radius); x++) {
+                if (this.pellets[y] && this.pellets[y][x] === 1) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+
+
+    /**
+     * Calcula bonus por moverse en dirección segura lejos de fantasmas
+     */
+    calculateSafeDirectionBonus(action, state) {
+        let bonus = 0;
+        
+        // Verifica si la acción aleja de los fantasmas
+        switch(action) {
+            case 'UP':
+                if (state.dyGhost > 0) bonus += 2; // Fantasma está abajo, subir es seguro
+                break;
+            case 'DOWN':
+                if (state.dyGhost < 0) bonus += 2; // Fantasma está arriba, bajar es seguro
+                break;
+            case 'LEFT':
+                if (state.dxGhost > 0) bonus += 2; // Fantasma está derecha, izquierda es seguro
+                break;
+            case 'RIGHT':
+                if (state.dxGhost < 0) bonus += 2; // Fantasma está izquierda, derecha es seguro
+                break;
+        }
+        
+        return bonus;
+    }
+
     /**
      * Obtiene las features observables del estado actual
      * @returns {Object} - Features para la política
@@ -368,13 +443,13 @@ export class GameEngine {
         const pacX = this.pacman.x / this.tileSize;
         const pacY = this.pacman.y / this.tileSize;
 
-        // Verificar direcciones bloqueadas
+        // Verifica direcciones bloqueadas
         const blockedUp = !this.pacman.canMove(0, -1, this.map);
         const blockedDown = !this.pacman.canMove(0, 1, this.map);
         const blockedLeft = !this.pacman.canMove(-1, 0, this.map);
         const blockedRight = !this.pacman.canMove(1, 0, this.map);
 
-        // Encontrar fantasma más cercano
+        // Encuentra fantasma más cercano
         let minGhostDist = Infinity;
         let closestGhost = null;
         this.ghosts.forEach(ghost => {
@@ -391,38 +466,104 @@ export class GameEngine {
         const dyGhost = closestGhost ? (closestGhost.y / this.tileSize - pacY) : 0;
         const ghostIsVulnerable = closestGhost ? (closestGhost.isVulnerable ? 1 : 0) : 0;
 
-        // Encontrar pellet más cercano
+        // Encuentra pellet más cercano
         let minPelletDist = Infinity;
         let dxPellet = 0;
         let dyPellet = 0;
-        
+        let pelletsUp = 0, pelletsDown = 0, pelletsLeft = 0, pelletsRight = 0;
+        let closestUp = Infinity, closestDown = Infinity, closestLeft = Infinity, closestRight = Infinity;
+
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
                 if (this.pellets[y][x] === 1) {
                     const dist = Math.sqrt(Math.pow(pacX - x, 2) + Math.pow(pacY - y, 2));
+                    
+                    // Pellet más cercano general
                     if (dist < minPelletDist) {
                         minPelletDist = dist;
                         dxPellet = x - pacX;
                         dyPellet = y - pacY;
                     }
+                    
+                    // Cuenta pellets por dirección y se encuentra el más cercano en cada una
+                    const relX = x - pacX;
+                    const relY = y - pacY;
+                    
+                    if (relY < -0.5 && Math.abs(relX) < Math.abs(relY)) { // Arriba
+                        pelletsUp++;
+                        if (dist < closestUp) closestUp = dist;
+                    }
+                    else if (relY > 0.5 && Math.abs(relX) < Math.abs(relY)) { // Abajo
+                        pelletsDown++;
+                        if (dist < closestDown) closestDown = dist;
+                    }
+                    else if (relX < -0.5 && Math.abs(relY) < Math.abs(relX)) { // Izquierda
+                        pelletsLeft++;
+                        if (dist < closestLeft) closestLeft = dist;
+                    }
+                    else if (relX > 0.5 && Math.abs(relY) < Math.abs(relX)) { // Derecha
+                        pelletsRight++;
+                        if (dist < closestRight) closestRight = dist;
+                    }
                 }
             }
         }
 
+        // Normaliza distancias, evitando el Infinity
+        closestUp = closestUp === Infinity ? 0 : Math.min(1, 8 / (closestUp + 1));
+        closestDown = closestDown === Infinity ? 0 : Math.min(1, 8 / (closestDown + 1));
+        closestLeft = closestLeft === Infinity ? 0 : Math.min(1, 8 / (closestLeft + 1));
+        closestRight = closestRight === Infinity ? 0 : Math.min(1, 8 / (closestRight + 1));
+
+        // Normaliza conteos de pellets, usando log para suavizar
+        pelletsUp = Math.min(1, Math.log(pelletsUp + 1) / 3);
+        pelletsDown = Math.min(1, Math.log(pelletsDown + 1) / 3);
+        pelletsLeft = Math.min(1, Math.log(pelletsLeft + 1) / 3);
+        pelletsRight = Math.min(1, Math.log(pelletsRight + 1) / 3);
+
+        const nearbyPellets = this.countNearbyPellets(pacX, pacY, 3);
+
+
         return {
-            blockedUp: blockedUp ? 1 : 0,
-            blockedDown: blockedDown ? 1 : 0,
-            blockedLeft: blockedLeft ? 1 : 0,
-            blockedRight: blockedRight ? 1 : 0,
-            distGhost: minGhostDist,
-            dxGhost,
-            dyGhost,
-            distPellet: minPelletDist === Infinity ? 0 : minPelletDist,
-            dxPellet,
-            dyPellet,
-            ghostIsVulnerable
-        };
+        blockedUp: blockedUp ? 1 : 0,
+        blockedDown: blockedDown ? 1 : 0,
+        blockedLeft: blockedLeft ? 1 : 0,
+        blockedRight: blockedRight ? 1 : 0,
+        distGhost: minGhostDist,
+        dxGhost,
+        dyGhost,
+        distPellet: minPelletDist === Infinity ? 0 : minPelletDist,
+        dxPellet,
+        dyPellet,
+        ghostIsVulnerable,
+        pelletsUp,
+        pelletsDown, 
+        pelletsLeft,
+        pelletsRight,
+        closestUp,
+        closestDown,
+        closestLeft,
+        closestRight
+    };
     }
+
+
+    /**
+     * Cuenta pellets en un radio alrededor de Pac-Man
+     */
+    countNearbyPellets(pacX, pacY, radius) {
+        let count = 0;
+        for (let y = Math.max(0, Math.floor(pacY - radius)); y <= Math.min(this.mapHeight - 1, Math.floor(pacY + radius)); y++) {
+            for (let x = Math.max(0, Math.floor(pacX - radius)); x <= Math.min(this.mapWidth - 1, Math.floor(pacX + radius)); x++) {
+                if (this.pellets[y] && this.pellets[y][x] === 1) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+
 
     /**
      * Actualiza el estado del juego
