@@ -4,65 +4,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GA-PAC-MAN - Algoritmo Genético</title>
+    <title>PAC-MAN AI - Genetic Algorithm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>GA-PAC-MAN</h1>
-            <p>Algoritmo Genético para aprender a jugar PAC-MAN</p>
+    <!-- Arcade Cabinet Frame -->
+    <div class="arcade-frame">
+
+        <!-- Marquee / Header -->
+        <header class="arcade-marquee">
+            <div class="marquee-glow"></div>
+            <h1 class="arcade-title">PAC-MAN</h1>
+            <p class="arcade-subtitle">GENETIC ALGORITHM</p>
+            <div class="marquee-border"></div>
         </header>
 
-        <div class="control-panel">
-            <div class="parameters">
-                <h3>Parámetros del AG</h3>
-                <div class="param-group">
-                    <label>Población (N):</label>
-                    <input type="number" id="populationSize" value="20" min="20">
-                </div>
-                <div class="param-group">
-                    <label>Generaciones (G):</label>
-                    <input type="number" id="generations" value="50" min="50">
-                </div>
-                <div class="param-group">
-                    <label>Semilla:</label>
-                    <input type="number" id="seed" value="12345">
-                </div>
-                <div class="param-group">
-                    <label>FPS:</label>
-                    <input type="number" id="fps" value="30" min="1" max="60">
-                </div>
-            </div>
+        <!-- Main Game Container -->
+        <div class="arcade-body">
 
-            <div class="controls">
-                <button id="startBtn">Iniciar Evolución</button>
-                <button id="pauseBtn" disabled>Pausar</button>
-                <button id="resetBtn">Reiniciar</button>
-                <button id="exportBtn">Exportar Mejor</button>
-                <button id="demoBtn">Demo Mejor</button>
-                <button id="manualBtn">Modo Manual</button>
-            </div>
+            <!-- Left Panel: Controls & Parameters -->
+            <aside class="control-side">
+
+                <!-- Parameters Section -->
+                <div class="arcade-panel parameters-panel">
+                    <h3 class="panel-title">CONFIG</h3>
+                    <div class="panel-content">
+                        <div class="param-group">
+                            <label for="populationSize">POPULATION</label>
+                            <input type="number" id="populationSize" value="20" min="20">
+                        </div>
+                        <div class="param-group">
+                            <label for="generations">GENERATIONS</label>
+                            <input type="number" id="generations" value="50" min="50">
+                        </div>
+                        <div class="param-group">
+                            <label for="seed">SEED</label>
+                            <input type="number" id="seed" value="12345">
+                        </div>
+                        <div class="param-group">
+                            <label for="fps">FPS</label>
+                            <input type="number" id="fps" value="30" min="1" max="60">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="arcade-panel controls-panel">
+                    <h3 class="panel-title">CONTROLS</h3>
+                    <div class="panel-content">
+                        <button id="startBtn" class="arcade-btn btn-start">START</button>
+                        <button id="pauseBtn" class="arcade-btn btn-pause" disabled>PAUSE</button>
+                        <button id="resetBtn" class="arcade-btn btn-reset">RESET</button>
+                        <button id="demoBtn" class="arcade-btn btn-demo">DEMO</button>
+                        <button id="exportBtn" class="arcade-btn btn-export">EXPORT</button>
+                        <button id="manualBtn" class="arcade-btn btn-manual">MANUAL</button>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Center: Game Screen -->
+            <main class="game-screen">
+                <div class="screen-bezel">
+                    <div class="screen-content">
+                        <canvas id="gameCanvas" width="600" height="600"></canvas>
+                    </div>
+                    <div class="screen-scanlines"></div>
+                </div>
+            </main>
+
+            <!-- Right Panel: Metrics -->
+            <aside class="metrics-side">
+
+                <!-- Live Stats -->
+                <div class="arcade-panel stats-panel">
+                    <h3 class="panel-title">STATS</h3>
+                    <div class="panel-content">
+                        <div class="stat-item">
+                            <span class="stat-label">GENERATION</span>
+                            <span class="stat-value" id="currentGeneration">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">BEST FITNESS</span>
+                            <span class="stat-value" id="bestFitness">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">AVG FITNESS</span>
+                            <span class="stat-value" id="avgFitness">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fitness Chart -->
+                <div class="arcade-panel chart-panel">
+                    <h3 class="panel-title">FITNESS</h3>
+                    <div class="panel-content">
+                        <canvas id="fitnessChart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+
+            </aside>
+
         </div>
 
-        <div class="metrics">
-            <h3>Métricas en Tiempo Real</h3>
-            <div id="metricsDisplay">
-                <p>Mejor Fitness: <span id="bestFitness">0</span></p>
-                <p>Promedio Fitness: <span id="avgFitness">0</span></p>
-                <p>Generación: <span id="currentGeneration">0</span></p>
+        <!-- Arcade Footer -->
+        <footer class="arcade-footer">
+            <div class="footer-lights">
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
+                <span class="light"></span>
             </div>
-            <canvas id="fitnessChart" width="600" height="200"></canvas>
-        </div>
+            <p class="footer-text">© PAC-MAN GA - JUAN PABLO CAMBRONERO Y LUIS ARRIETA 2025</p>
+        </footer>
 
-        <div class="game-area">
-            <h3>Vista del Juego</h3>
-            <canvas id="gameCanvas" width="600" height="600"></canvas>
-        </div>
     </div>
 
-    <!-- SOLO ESTE SCRIPT -->
     <script type="module" src="src/main.js"></script>
 </body>
 

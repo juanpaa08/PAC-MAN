@@ -1,113 +1,544 @@
+/* ============================================
+   RETRO ARCADE PAC-MAN 1980 THEME
+   ============================================ */
+
+/* Press Start 2P Font Import (added in HTML) */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+}
+
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #1a1a2e;
-    color: #fff;
-    line-height: 1.6;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    background: #000000 url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect fill="%23050505" width="100" height="100"/><circle cx="50" cy="50" r="1" fill="%23111"/></svg>');
+    color: #FFFFFF;
+    line-height: 1.8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
+/* ============================================
+   ARCADE CABINET FRAME
+   ============================================ */
+.arcade-frame {
+    max-width: 1400px;
+    width: 100%;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0d0d1a 100%);
+    border: 8px solid #2a2a3e;
+    border-radius: 20px 20px 8px 8px;
+    box-shadow:
+        0 0 40px rgba(255, 204, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.9);
     padding: 20px;
 }
 
-header {
+/* ============================================
+   MARQUEE HEADER
+   ============================================ */
+.arcade-marquee {
+    position: relative;
     text-align: center;
+    padding: 30px 20px 20px;
+    background: linear-gradient(135deg, #003366 0%, #001a33 100%);
+    border: 4px solid #ffcc00;
+    border-radius: 12px;
     margin-bottom: 30px;
+    box-shadow:
+        0 0 30px rgba(255, 204, 0, 0.6),
+        inset 0 0 20px rgba(0, 51, 102, 0.8);
 }
 
-header h1 {
+.marquee-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 204, 0, 0.1) 25%,
+            transparent 50%,
+            rgba(255, 204, 0, 0.1) 75%,
+            transparent 100%);
+    animation: marqueeGlow 4s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes marqueeGlow {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.arcade-title {
+    font-size: 3.5em;
     color: #ffcc00;
-    font-size: 2.5em;
+    text-shadow:
+        0 0 10px #ffcc00,
+        0 0 20px #ffcc00,
+        0 0 30px #ff6600,
+        3px 3px 0 #000;
+    letter-spacing: 8px;
     margin-bottom: 10px;
+    position: relative;
 }
 
-.control-panel {
-    background: #16213e;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
+.arcade-subtitle {
+    font-size: 0.7em;
+    color: #00ffff;
+    text-shadow:
+        0 0 10px #00ffff,
+        2px 2px 0 #000;
+    letter-spacing: 4px;
 }
 
-.parameters, .controls {
-    flex: 1;
-    min-width: 300px;
-    margin: 10px;
+.marquee-border {
+    height: 3px;
+    background: linear-gradient(90deg,
+            transparent,
+            #ffcc00,
+            transparent);
+    margin-top: 15px;
+    box-shadow: 0 0 10px #ffcc00;
 }
 
-.param-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: inline-block;
-    width: 150px;
-    margin-right: 10px;
-}
-
-input[type="number"] {
-    width: 100px;
-    padding: 5px;
-    border: 1px solid #333;
-    border-radius: 4px;
-    background: #0f3460;
-    color: white
-}
-
-button {
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 5px;
-    background: #ffcc00;
-    color: #1a1a2e;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-button:hover:not(disabled) {
-    background: #ffd700;
-}
-
-button:disabled {
-    background: #666;
-    cursor: not-allowed;
-}
-
-.metrics {
-    background: #16213e;
-    padding: 20px;
-    border-radius: 10px;
+/* ============================================
+   ARCADE BODY LAYOUT
+   ============================================ */
+.arcade-body {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 20px;
     margin-bottom: 20px;
 }
 
-#metricsDisplay {
-    display: flex;
-    justify-content: space-around;
+/* ============================================
+   ARCADE PANELS (GENERAL)
+   ============================================ */
+.arcade-panel {
+    background: linear-gradient(135deg, #16213e 0%, #0f1829 100%);
+    border: 3px solid #2a3456;
+    border-radius: 8px;
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     margin-bottom: 20px;
+    overflow: hidden;
 }
 
-.game-area {
+.panel-title {
+    background: linear-gradient(135deg, #1a2740 0%, #111827 100%);
+    color: #ffcc00;
+    font-size: 0.7em;
+    padding: 12px;
+    border-bottom: 2px solid #2a3456;
+    text-shadow: 0 0 10px #ffcc00, 2px 2px 0 #000;
+    letter-spacing: 3px;
     text-align: center;
+}
+
+.panel-content {
+    padding: 20px;
+}
+
+/* ============================================
+   PARAMETERS PANEL
+   ============================================ */
+.param-group {
+    margin-bottom: 20px;
+}
+
+.param-group label {
+    display: block;
+    color: #00ffff;
+    font-size: 0.5em;
+    margin-bottom: 8px;
+    text-shadow: 0 0 5px #00ffff, 1px 1px 0 #000;
+    letter-spacing: 1px;
+}
+
+.param-group input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    background: #000;
+    border: 2px solid #003366;
+    border-radius: 4px;
+    color: #ffcc00;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6em;
+    text-align: center;
+    box-shadow:
+        inset 0 2px 8px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(0, 51, 102, 0.5);
+    transition: all 0.3s;
+}
+
+.param-group input[type="number"]:focus {
+    outline: none;
+    border-color: #ffcc00;
+    box-shadow:
+        inset 0 2px 8px rgba(0, 0, 0, 0.8),
+        0 0 15px rgba(255, 204, 0, 0.8);
+}
+
+/* ============================================
+   ARCADE BUTTONS
+   ============================================ */
+.arcade-btn {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5em;
+    font-weight: bold;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 4px 0 #996600,
+        0 6px 12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+}
+
+.arcade-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 70%);
+    transform: rotate(45deg);
+    animation: buttonShine 3s infinite;
+}
+
+@keyframes buttonShine {
+
+    0%,
+    100% {
+        transform: translateX(-100%) rotate(45deg);
+    }
+
+    50% {
+        transform: translateX(100%) rotate(45deg);
+    }
+}
+
+.arcade-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 0 #996600,
+        0 8px 15px rgba(255, 204, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.arcade-btn:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow:
+        0 2px 0 #996600,
+        0 3px 8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.arcade-btn:disabled {
+    background: linear-gradient(180deg, #555 0%, #333 100%);
+    color: #888;
+    cursor: not-allowed;
+    box-shadow:
+        0 4px 0 #222,
+        0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Button Color Variations */
+.btn-start {
+    background: linear-gradient(180deg, #00ff00 0%, #00cc00 100%);
+    box-shadow: 0 4px 0 #006600, 0 6px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-start:hover:not(:disabled) {
+    box-shadow: 0 6px 0 #006600, 0 8px 15px rgba(0, 255, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-start:active:not(:disabled) {
+    box-shadow: 0 2px 0 #006600, 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.btn-pause,
+.btn-demo {
+    background: linear-gradient(180deg, #00ccff 0%, #0099cc 100%);
+    box-shadow: 0 4px 0 #006699, 0 6px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-pause:hover:not(:disabled),
+.btn-demo:hover:not(:disabled) {
+    box-shadow: 0 6px 0 #006699, 0 8px 15px rgba(0, 255, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-pause:active:not(:disabled),
+.btn-demo:active:not(:disabled) {
+    box-shadow: 0 2px 0 #006699, 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+.btn-reset {
+    background: linear-gradient(180deg, #ff3333 0%, #cc0000 100%);
+    box-shadow: 0 4px 0 #660000, 0 6px 12px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-reset:hover:not(:disabled) {
+    box-shadow: 0 6px 0 #660000, 0 8px 15px rgba(255, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.btn-reset:active:not(:disabled) {
+    box-shadow: 0 2px 0 #660000, 0 3px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================
+   GAME SCREEN
+   ============================================ */
+.game-screen {
+    position: relative;
+}
+
+.screen-bezel {
+    background: #0a0a0a;
+    border: 12px solid #1a1a2e;
+    border-radius: 8px;
+    box-shadow:
+        inset 0 0 40px rgba(0, 0, 0, 0.9),
+        0 0 30px rgba(0, 102, 255, 0.3);
+    position: relative;
+    padding: 20px;
+}
+
+.screen-content {
+    position: relative;
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 #gameCanvas {
-    border: 2px solid #ffcc00;
-    border-radius: 10px;
+    display: block;
+    width: 100%;
+    height: auto;
     background: #000;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
 }
 
+/* CRT Scanlines Effect */
+.screen-scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom,
+            transparent 50%,
+            rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: 4px;
+}
+
+/* ============================================
+   STATS PANEL
+   ============================================ */
+.stat-item {
+    background: #000;
+    border: 2px solid #2a3456;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.stat-label {
+    display: block;
+    color: #00ffff;
+    font-size: 0.4em;
+    margin-bottom: 8px;
+    text-shadow: 0 0 5px #00ffff, 1px 1px 0 #000;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    display: block;
+    color: #ffcc00;
+    font-size: 1.2em;
+    text-shadow:
+        0 0 10px #ffcc00,
+        0 0 20px #ff6600,
+        2px 2px 0 #000;
+    font-weight: bold;
+}
+
+/* ============================================
+   FITNESS CHART
+   ============================================ */
 #fitnessChart {
-    border: 1px solid #333;
-    background: #0f3460;
+    width: 100%;
+    height: auto;
+    background: #000;
+    border: 2px solid #003366;
+    border-radius: 4px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================
+   ARCADE FOOTER
+   ============================================ */
+.arcade-footer {
+    text-align: center;
+    padding: 15px;
+    background: linear-gradient(135deg, #1a2740 0%, #0d1320 100%);
+    border: 2px solid #2a3456;
+    border-radius: 6px;
+}
+
+.footer-lights {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff0000;
+    box-shadow:
+        0 0 10px #ff0000,
+        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation: lightBlink 1.5s infinite;
+}
+
+.light:nth-child(1) {
+    background: #ff0000;
+    box-shadow: 0 0 10px #ff0000, inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation-delay: 0s;
+}
+
+.light:nth-child(2) {
+    background: #00ff00;
+    box-shadow: 0 0 10px #00ff00, inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation-delay: 0.3s;
+}
+
+.light:nth-child(3) {
+    background: #ffcc00;
+    box-shadow: 0 0 10px #ffcc00, inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation-delay: 0.6s;
+}
+
+.light:nth-child(4) {
+    background: #00ffff;
+    box-shadow: 0 0 10px #00ffff, inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation-delay: 0.9s;
+}
+
+.light:nth-child(5) {
+    background: #ff00ff;
+    box-shadow: 0 0 10px #ff00ff, inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    animation-delay: 1.2s;
+}
+
+@keyframes lightBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.footer-text {
+    color: #666;
+    font-size: 0.4em;
+    letter-spacing: 2px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 1200px) {
+    .arcade-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+
+    .control-side,
+    .metrics-side {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .arcade-title {
+        font-size: 2.5em;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .control-side,
+    .metrics-side {
+        grid-template-columns: 1fr;
+    }
+
+    .arcade-title {
+        font-size: 1.8em;
+        letter-spacing: 4px;
+    }
+
+    .arcade-subtitle {
+        font-size: 0.5em;
+    }
+
+    body {
+        font-size: 14px;
+    }
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+/* Hide legacy metrics display */
+#metricsDisplay {
+    display: none;
 }
