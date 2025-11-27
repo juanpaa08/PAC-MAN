@@ -20,6 +20,7 @@ class GameApp {
 
         this.initializeElements();
         this.setupEventListeners();
+        this.setupValidation();
     }
 
     /**
@@ -212,23 +213,78 @@ class GameApp {
         ctx.fillText('Fitness: ' + maxFitness.toFixed(0), 5, padding);
     }
 
+
     /**
      * Obtiene la configuración de los parámetros del UI
      * @returns {Object} Configuración para el algoritmo genético
      */
     getConfig() {
+        // Valida que los porcentajes sumen 100%
+        const selectionRate = parseInt(document.getElementById('selectionRate').value) || 20;
+        const crossoverRate = parseInt(document.getElementById('crossoverRate').value) || 60;
+        const mutationRate = parseInt(document.getElementById('mutationRate').value) || 20;
+        
+        // Muestra advertencia si no suman 100%
+        if (selectionRate + crossoverRate + mutationRate !== 100) {
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('startBtn').title = 'Los porcentajes deben sumar 100%';
+            throw new Error('Los porcentajes de selección, cruzamiento y mutación deben sumar 100%');
+        } else {
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').title = '';
+        }
+
         return {
             populationSize: parseInt(document.getElementById('populationSize').value),
             generations: parseInt(document.getElementById('generations').value),
+            selectionRate: selectionRate / 100,  // Convierte a decimal
+            crossoverRate: crossoverRate / 100,  
+            mutationRate: mutationRate / 100,   
+            tournamentSize: parseInt(document.getElementById('tournamentSize').value),
+            episodesPerIndividual: parseInt(document.getElementById('episodesPerIndividual').value),
             seed: parseInt(document.getElementById('seed').value),
             fps: parseInt(document.getElementById('fps').value),
-            mutationRate: 0.1,
-            crossoverRate: 0.7,
-            elitismCount: 1,
-            tournamentSize: 3,
-            episodesPerIndividual: 1
+            elitismCount: 1
         };
     }
+
+
+    /**
+     * Configura validación en tiempo real para los porcentajes
+     */
+    setupValidation() {
+        const percentageInputs = ['selectionRate', 'crossoverRate', 'mutationRate'];
+        
+        percentageInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', () => this.validatePercentages());
+            }
+        });
+    }
+
+    /**
+     * Valida que los porcentajes sumen 100%
+     */
+    validatePercentages() {
+        const selectionRate = parseInt(document.getElementById('selectionRate').value) || 0;
+        const crossoverRate = parseInt(document.getElementById('crossoverRate').value) || 0;
+        const mutationRate = parseInt(document.getElementById('mutationRate').value) || 0;
+        
+        const total = selectionRate + crossoverRate + mutationRate;
+        const startBtn = document.getElementById('startBtn');
+        
+        if (total !== 100) {
+            startBtn.disabled = true;
+            startBtn.title = `Los porcentajes suman ${total}%. Deben sumar 100%`;
+            startBtn.style.backgroundColor = '#ff4444';
+        } else {
+            startBtn.disabled = false;
+            startBtn.title = 'Iniciar evolución';
+            startBtn.style.backgroundColor = ''; // Vuelve al color original
+        }
+    }
+
 
     /**
      * Pausa o reanuda la evolución

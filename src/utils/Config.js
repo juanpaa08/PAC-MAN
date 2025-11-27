@@ -3,8 +3,9 @@ export class Config {
         return {
             populationSize: 20,
             generations: 50,
-            mutationRate: 0.1,
-            crossoverRate: 0.7,
+            selectionRate: 0.2,      
+            crossoverRate: 0.6,      
+            mutationRate: 0.2,       
             elitismCount: 1,
             tournamentSize: 3,
             seed: 12345,
@@ -12,7 +13,7 @@ export class Config {
             episodesPerIndividual: 1,
             mazeWidth: 28,
             mazeHeight: 31,
-            titleSize: 20
+            tileSize: 20
         };
     }
 }

@@ -110,8 +110,9 @@ Demo del mejor individuo
 ### Parámetros Configurables
 - `populationSize`: Tamaño de población (≥20)
 - `generations`: Número de generaciones (≥50)
-- `mutationRate`: Tasa de mutación (default: 0.1)
-- `crossoverRate`: Tasa de cruzamiento (default: 0.7)
+- `mutationRate`: : Porcentaje de mutación (default: 20%) 
+- `selectionRate`: Porcentaje de selección (default: 20%)
+- `crossoverRate`: Porcentaje de cruzamiento (default: 60%)
 - `elitismCount`: Individuos élite preservados (default: 1)
 - `tournamentSize`: Tamaño del torneo (default: 3)
 - `seed`: Semilla aleatoria para reproducibilidad

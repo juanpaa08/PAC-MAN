@@ -149,17 +149,17 @@ export class GeneticAlgorithm {
         this.generation++;
         console.log(`\n=== Generación ${this.generation} ===`);
         
-        // 1. Evaluar población si es necesario
+        //  Evalua población si es necesario
         if (this.generation === 1) {
             this.evaluatePopulation();
         }
         
-        // 2. Crear nueva población
+        // Crea nueva población
         const newPopulation = [];
         const popSize = this.config.populationSize;
         const elitismCount = this.config.elitismCount || 1;
         
-        // 3. Elitismo: mantener los mejores individuos
+        // Elitismo: mantiene los mejores individuos
         const sortedIndividuals = [...this.population.individuals].sort((a, b) => b.fitness - a.fitness);
         for (let i = 0; i < elitismCount; i++) {
             newPopulation.push(sortedIndividuals[i].clone());
@@ -167,28 +167,29 @@ export class GeneticAlgorithm {
         
         console.log(`Elitismo: ${elitismCount} mejores individuos preservados`);
         
-        // 4. Generar resto de población con selección, cruzamiento y mutación
+        // Genera resto de población con selección, cruzamiento y mutación
         while (newPopulation.length < popSize) {
             // Selección por torneo
-            const parent1 = this.tournamentSelection();
-            const parent2 = this.tournamentSelection();
+            const parent1 = this.tournamentSelection(this.config.tournamentSize);
+            const parent2 = this.tournamentSelection(this.config.tournamentSize);
             
-            // Cruzamiento
+            // Cruzamiento usa tasa configurada
             let offspring;
-            if (this.rng() < (this.config.crossoverRate || 0.7)) {
+            if (this.rng() < this.config.crossoverRate) {
                 const [child1, child2] = this.onePointCrossover(parent1, parent2);
                 offspring = [child1, child2];
             } else {
-                // Sin cruzamiento, clonar padres
+                // Sin cruzamiento, clona padres
                 offspring = [parent1.clone(), parent2.clone()];
             }
+    
             
-            // Mutación
+            // Mutación usa tasa configurada
             offspring.forEach(child => {
-                this.gaussianMutation(child);
+                this.gaussianMutation(child, this.config.mutationRate);
             });
             
-            // Agregar a nueva población
+            // Agrega a nueva población
             offspring.forEach(child => {
                 if (newPopulation.length < popSize) {
                     newPopulation.push(child);
@@ -196,13 +197,13 @@ export class GeneticAlgorithm {
             });
         }
         
-        // 5. Reemplazar población
+        // Reemplaza población
         this.population.setIndividuals(newPopulation);
         
-        // 6. Evaluar nueva población
+        // Evalua nueva población
         this.evaluatePopulation();
         
-        // 7. Mostrar estadísticas
+        // Muestra estadísticas
         const stats = this.getCurrentStats();
         console.log(`Mejor Fitness: ${stats.bestFitness.toFixed(2)}`);
         console.log(`Fitness Promedio: ${stats.avgFitness.toFixed(2)}`);
