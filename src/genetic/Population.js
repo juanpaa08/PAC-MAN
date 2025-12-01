@@ -32,15 +32,34 @@ export class Population {
      */
     evaluate() {
         console.log(`Evaluando población (generación ${this.generation})...`);
+
+        let totalEvalTime = 0;
+        let evalCount = 0;
         
         this.individuals.forEach((individual, index) => {
             if (individual.fitness === 0) { // Solo evaluar si no tiene fitness
+                const startTime = performance.now();
                 individual.evaluateFitness(this.gameEngine);
+                const endTime = performance.now();
+                const evalTime = endTime - startTime;
+                totalEvalTime += evalTime;
+                evalCount++;
+
+                 if (index < 3) {
+                    console.log(`Individuo ${index}: ${evalTime.toFixed(2)}ms`);
+                }
             }
         });
-        
+
+        if (evalCount > 0) {
+            console.log(`Tiempo total evaluación: ${totalEvalTime.toFixed(2)}ms`);
+            console.log(`Tiempo promedio por individuo: ${(totalEvalTime/evalCount).toFixed(2)}ms`);
+            console.log(`Evaluados: ${evalCount}/${this.individuals.length} individuos`);
+        }
+
         // Ordenar por fitness (de mayor a menor)
         this.individuals.sort((a, b) => b.fitness - a.fitness);
+        this.generation++;
     }
 
     /**

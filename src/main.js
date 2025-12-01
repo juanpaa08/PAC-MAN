@@ -111,8 +111,16 @@ class GameApp {
         console.log(`\n>>> Iniciando generación ${this.ga.generation + 1}/${this.ga.config.generations}`);
         
         // Evolucionar una generación
+        const startGenTime = performance.now();
         this.ga.evolve();
+        const endGenTime = performance.now();
+
         this.currentGeneration = this.ga.generation;
+
+         // Guarda tiempos
+        const genTime = endGenTime - startGenTime;
+        console.log(`>>> Generación ${this.currentGeneration} completada en ${genTime.toFixed(2)}ms`);
+    
 
         // Actualizar métricas en la UI
         this.updateMetrics();

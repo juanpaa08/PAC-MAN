@@ -149,7 +149,10 @@ export class GeneticAlgorithm {
         this.generation++;
         console.log(`\n=== Generación ${this.generation} ===`);
         
-        //  Evalua población si es necesario
+        const startGenTime = performance.now();
+        let opTime = 0;
+        
+        // Evalua población si es necesario
         if (this.generation === 1) {
             this.evaluatePopulation();
         }
@@ -159,7 +162,10 @@ export class GeneticAlgorithm {
         const popSize = this.config.populationSize;
         const elitismCount = this.config.elitismCount || 1;
         
-        // Elitismo: mantiene los mejores individuos
+        // Mide operadores geneticos
+        const opStartTime = performance.now();
+        
+        // Elitismo, mantiene los mejores individuos
         const sortedIndividuals = [...this.population.individuals].sort((a, b) => b.fitness - a.fitness);
         for (let i = 0; i < elitismCount; i++) {
             newPopulation.push(sortedIndividuals[i].clone());
@@ -179,23 +185,25 @@ export class GeneticAlgorithm {
                 const [child1, child2] = this.onePointCrossover(parent1, parent2);
                 offspring = [child1, child2];
             } else {
-                // Sin cruzamiento, clona padres
+                // Sin cruzamiento, clona los padres
                 offspring = [parent1.clone(), parent2.clone()];
             }
-    
-            
-            // Mutación usa tasa configurada
+
+            // Mutación usando tasa configurada
             offspring.forEach(child => {
                 this.gaussianMutation(child, this.config.mutationRate);
             });
             
-            // Agrega a nueva población
+            // Se agrega a nueva población
             offspring.forEach(child => {
                 if (newPopulation.length < popSize) {
                     newPopulation.push(child);
                 }
             });
         }
+        
+        opTime = performance.now() - opStartTime;
+        console.log(`Operadores genéticos: ${opTime.toFixed(2)}ms`);
         
         // Reemplaza población
         this.population.setIndividuals(newPopulation);
@@ -207,6 +215,9 @@ export class GeneticAlgorithm {
         const stats = this.getCurrentStats();
         console.log(`Mejor Fitness: ${stats.bestFitness.toFixed(2)}`);
         console.log(`Fitness Promedio: ${stats.avgFitness.toFixed(2)}`);
+        
+        const totalGenTime = performance.now() - startGenTime;
+        console.log(`Tiempo total generación: ${totalGenTime.toFixed(2)}ms`);
         
         return this.population.getBestIndividual();
     }
